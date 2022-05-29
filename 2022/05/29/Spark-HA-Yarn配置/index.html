@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   
-  <title>Hello World [ Hexo ]</title>
+  <title>Spark HA&amp; Yarn配置 [ Hexo ]</title>
   
     <!-- stylesheets list from config.yml -->
     
@@ -63,33 +63,87 @@
 </div>
     </div>
     <div class="container">
-        <h1 class="post-title">Hello World</h1>
+        <h1 class="post-title">Spark HA&amp; Yarn配置</h1>
 <article class="post markdown-style">
-  <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+  <p>一、Spark(HA)高可用模式部署（主备模式）</p>
+<p>####前提：确保Zookeeper和HDFS已经启动</p>
+<ol>
+<li><p>在spark-env.sh中注释掉SPARK_MASTER_HOST&#x3D;master</p>
+</li>
+<li><p>追加以下内容</p>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SPARK_DAEMON_JAVA_OPTS=&quot;-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=master:2181,slave1:2181,slave2:2181 -Dspark.deploy.zookeeper.dir=/spark-ha&quot;</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<p># spark.deploy.recoveryMode 指定HA模式 基于Zookeeper实现</p>
+<p># 指定Zookeeper的连接地址</p>
+<p># 指定在Zookeeper中注册临时节点的路径</p>
+<ol start="3">
+<li>分发spark-env.sh</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">scp spark-env.sh slave1:/export/server/spark/conf/</span><br><span class="line"></span><br><span class="line">scp spark-env.sh slave2:/export/server/spark/conf/</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+<ol start="4">
+<li>停止当前StandAlong集群</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server/spark</span><br><span class="line"></span><br><span class="line">sbin/stop-all.sh</span><br></pre></td></tr></table></figure>
+
+<p># 在master上启动一个master和 全部worker</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sbin/start-all.sh</span><br></pre></td></tr></table></figure>
+
+<p>#下面命令只在slave1上执行</p>
+<p>#在slave1上启动一个备用master进程</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sbin/start-master.sh</span><br></pre></td></tr></table></figure>
+
+
+
+<ol start="5">
+<li>主备切换</li>
+</ol>
+<p>#提交一个spark任务到当前alive master上，在提交成功后将alive master 直接kill掉</p>
+<p><strong>结论： HA模式下, 主备切换 不会影响到正在运行的程序.</strong></p>
+<p>二、Spark(Yarn)Yarn集群模式部署</p>
+<p>1.检查spark-env.sh中HADOOP_CONF_DIR和YARN_CONF_DIR</p>
+<p>###在&#x2F;etc&#x2F;profile中追加（三台机器追加）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#YARN_CONF_DIR</span><br><span class="line"></span><br><span class="line">export YARN_CONF_DIR=/export/server/hadoop/etc/hadoop</span><br></pre></td></tr></table></figure>
+
+
+
+<ol start="2">
+<li>连接到YARN中</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/pyspark --master yarn --deploy-mode client</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/pyspark --master yarn --deploy-mode cluster</span><br></pre></td></tr></table></figure>
+
+<p># –deploy-mode 选项是指定部署模式, 默认是 客户端模式</p>
+<p># client就是客户端模式</p>
+<p># cluster就是集群模式</p>
+<p># –deploy-mode 仅可以用在YARN模式下</p>
+<p><strong>注意: 交互式环境 pyspark  和 spark-shell  无法运行 cluster模式</strong></p>
+<ol start="3">
+<li>测试</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/spark-submit --master yarn /export/server/spark/examples/src/main/python/pi.py 10</span><br></pre></td></tr></table></figure>
+
+
+
 
 </article>
 
     <div class="pagenator post-pagenator">
     
     
+        <a class="extend prev post-prev" href="/2022/05/29/hello-world/">prev</a>
+    
 
     
     <p>last update time 2022-05-29</p>
     
     
-        <a class="extend next post-next" href="/2022/05/29/Spark-HA-Yarn%E9%85%8D%E7%BD%AE/">next</a>
+        <a class="extend next post-next" href="/2022/05/29/Spark-local-stand-alone%E9%85%8D%E7%BD%AE/">next</a>
     
     </div>
 

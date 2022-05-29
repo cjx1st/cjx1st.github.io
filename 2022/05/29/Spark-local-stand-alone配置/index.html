@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  
+  <title>Spark local&amp; stand-alone配置 [ Hexo ]</title>
+  
+    <!-- stylesheets list from config.yml -->
+    
+      <link rel="stylesheet" href="/css/iLiKE.css">
+    
+  
+  
+  
+  <script src="//cdn1.lncld.net/static/js/3.1.1/av-min.js"></script>
+    <script id="leancloud">
+      AV.init({
+          appId: "6E5zTbTljdUbVW2WkXPsXGJk-gzGzoHsz",
+          appKey: "0vsyDKfNpeSECAI70J794ugv"
+      });
+    </script>
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+<body>
+    <div class="header">
+        <div class="container">
+    <div class="menu">
+      <div class="menu-left">
+        <a href="/">
+          <img src="/favicon.ico"></img>
+        </a>
+      </div>
+      <div class="menu-right">
+        
+          
+          
+          
+          
+          
+          
+          <a href="/">Home</a>
+        
+          
+          
+          
+          
+          
+          
+          <a href="/archives">Archives</a>
+        
+          
+          
+          
+          
+          
+          
+          <a href="/about">About</a>
+        
+      </div>
+    </div>
+</div>
+    </div>
+    <div class="container">
+        <h1 class="post-title">Spark local&amp; stand-alone配置</h1>
+<article class="post markdown-style">
+  <p>一、Spark（local）本地服务部署<br> <strong>(1)Anaconda****安装</strong></p>
+<p>####上传安装包</p>
+<p>####安装</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server</span><br><span class="line"></span><br><span class="line">sh ./Anaconda3-2021.05-Linux-x86_64.sh</span><br></pre></td></tr></table></figure>
+
+<p>####先回车然后空格5下输入yes到下面这个页面</p>
+<p>####安装成功，退出finalshell再重新进来</p>
+<p>####创建虚拟环境</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">conda create -n pyspark python=3.8</span><br></pre></td></tr></table></figure>
+
+<p>####进入虚拟环境pyspark</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">conda activate pyspark</span><br></pre></td></tr></table></figure>
+
+<p>####在pyspark中安装pyhive pyspark jieba三个库</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install pyhive pyspark jieba -i https://pypi.tuna.tsinghua.edu.cn/simple</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>(1)</strong>  <strong>解压下载的Spark****安装包</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server</span><br><span class="line"></span><br><span class="line">tar -zxvf spark-3.2.0-bin-hadoop3.2.tgz</span><br></pre></td></tr></table></figure>
+
+<p>####做软链接</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ln -s /export/server/spark-3.2.0-bin-hadoop3.2 /export/server/spark</span><br></pre></td></tr></table></figure>
+
+<p><img src="/Spark-local-stand-alone%E9%85%8D%E7%BD%AE/125.png" alt="125"></p>
+<p><strong>(2)</strong>  <strong>测试</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server/spark/bin</span><br><span class="line"></span><br><span class="line">./pyspark</span><br><span class="line"></span><br><span class="line">sc.parallelize([1,2,3,4,5]).map(lambda x: x + 1).collect()</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>(3)</strong>  <strong>WEB UI<strong><strong>（4040</strong></strong>）</strong></p>
+<p>#### Spark在程序运行的时候，会绑定到机器的4040端口上，如果4040端口被占用会往后顺延4041…</p>
+<p>####WEB 页面： <a target="_blank" rel="noopener" href="http://master:4040/">http://master:4040/</a></p>
+<p>一、Spark(stand-alone)单机模式部署</p>
+<ol>
+<li>集群规划</li>
+</ol>
+<p>2.在所有机器安装Python（Anaconda），同时创建pyspark环境和下载所需要的库，参考Local模式部署</p>
+<p>3.配置配置文件</p>
+<p>####进入spark配置文件目录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server/spark/conf/</span><br></pre></td></tr></table></figure>
+
+<p>**(1)<strong><strong>配置</strong></strong>workers**<strong>文件</strong></p>
+<p>#改名去掉后缀template</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv workers.template workers</span><br></pre></td></tr></table></figure>
+
+<p>#编辑workers文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim workers</span><br></pre></td></tr></table></figure>
+
+<p>#将里面的localhost删除追加</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">master</span><br><span class="line"></span><br><span class="line">slave1</span><br><span class="line"></span><br><span class="line">slave2</span><br></pre></td></tr></table></figure>
+
+<p># 功能: 这个文件就是指示了 当前SparkStandAlone环境下, 有哪些worker</p>
+<p><strong>(1)</strong>  <strong>配置<strong><strong>spark-env.sh</strong></strong>文件</strong></p>
+<p>#### 改名</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv spark-env.sh.templat##e spark-env.sh</span><br></pre></td></tr></table></figure>
+
+<p>####编辑spark-env.sh, 在底部追加如下内容</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim spark-env.sh</span><br></pre></td></tr></table></figure>
+
+<p>###设置JAVA安装目录</p>
+<p><strong>(2)</strong> <strong>在HDFS上创建程序运行历史记录存放的文件夹</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hadoop fs -mkdir /sparklog</span><br><span class="line"></span><br><span class="line">hadoop fs -chmod 777 /sparklog</span><br></pre></td></tr></table></figure>
+
+<p><strong>(3)</strong> <strong>配置spark-defaults.conf文件</strong></p>
+<p>####改名</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mv spark-defaults.conf.template spark-defaults.conf</span><br><span class="line"></span><br><span class="line">vim spark-defaults.conf</span><br></pre></td></tr></table></figure>
+
+<p>###开启spark的日期记录功能</p>
+<p>(4) 配置log4j.properties 文件 [可选配置]</p>
+<p>#改名</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv log4j.properties.template log4j.properties</span><br></pre></td></tr></table></figure>
+
+
+
+<p>(5)  分发spark</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">scp -r /export/server/spark-3.2.0-bin-hadoop3.2 root@slave1:/export/server/</span><br><span class="line"></span><br><span class="line">scp -r /export/server/spark-3.2.0-bin-hadoop3.2 root@slave2:/export/server/</span><br></pre></td></tr></table></figure>
+
+<p>(6)  配置环境变量和root&#x2F;.bashrc文件（三台都需要配置）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/profile</span><br><span class="line"></span><br><span class="line">spark</span><br><span class="line"></span><br><span class="line">export SPARK_HOME=/export/server/spark</span><br><span class="line"></span><br><span class="line">HADOOP_CONF_DIR</span><br><span class="line"></span><br><span class="line">export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop</span><br><span class="line"></span><br><span class="line">PYSPARK_PYTHON</span><br><span class="line"></span><br><span class="line">export PYSPARK_PYTHON=/export/server/anaconda3/envs/pyspark/bin/python</span><br><span class="line"></span><br><span class="line">vim ~/.bashrc</span><br><span class="line"></span><br><span class="line">追加</span><br><span class="line"></span><br><span class="line">export PYSPARK_PYTHON=/export/server/anaconda3/envs/pyspark/bin/python</span><br><span class="line"></span><br><span class="line">export JAVA_HOME=/export/server/jdk</span><br></pre></td></tr></table></figure>
+
+
+
+<p>(7)  启动历史服务器</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sbin/start-history-server.sh</span><br></pre></td></tr></table></figure>
+
+<p>(8)  启动Spark的Master和Worker进程</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sbin/start-all.sh</span><br></pre></td></tr></table></figure>
+
+<p>!</p>
+<p>####master默认端口是8080，如果被占用会顺延到8081….</p>
+<p>Master UI ：master:8080 历史服务器 WEB UI：master:18080</p>
+<ol start="3">
+<li>连接到StandAlone集群</li>
+</ol>
+<p>####执行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/pyspark --master spark://master:7077</span><br></pre></td></tr></table></figure>
+
+
+
+<p>通过–master选项来连接到 StandAlone集群</p>
+<p>如果不写–master选项, 默认是local模式运行</p>
+<p>####测试代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bin/spark-shell</span><br><span class="line"></span><br><span class="line">sc.parallelize(Array(1,2,3,4,5)).map(x=&gt; x + 1).collect()</span><br><span class="line"></span><br><span class="line">bin/spark-submit (PI)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>同样使用–master来指定将任务提交到集群运行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/spark-submit --master spark://master:7077 /export/server/spark/examples/src/main/python/pi.py 100</span><br></pre></td></tr></table></figure>
+
+
+</article>
+
+    <div class="pagenator post-pagenator">
+    
+    
+        <a class="extend prev post-prev" href="/2022/05/29/Spark-HA-Yarn%E9%85%8D%E7%BD%AE/">prev</a>
+    
+
+    
+    <p>last update time 2022-05-29</p>
+    
+    
+        <a class="extend next post-next" href="/2022/05/22/Spark%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">next</a>
+    
+    </div>
+
+
+    </div>
+    <div class="footer">
+        <div class="container">
+    <div class="social">
+	<ul class="social-list">
+		
+			
+				
+				
+				<li>
+					<a href="mailto:1178752402@qq.com" title="email" target="_blank">
+					<i class="fa fa-email"></i>
+					</a>
+				</li>
+			
+		
+			
+		
+			
+		
+			
+		
+			
+		
+			
+		
+			
+				
+				<li>
+					<a href="https://github.com/CaiChenghan" title="github" target="_self">
+					<i class="fa fa-github"></i>
+					</a>
+				</li>
+			
+		
+			
+		
+			
+		
+			
+		
+			
+				
+				<li>
+					<a href="https://www.jianshu.com/u/565c8e790605" title="jianshu" target="_self">
+					<i class="fa fa-jianshu"></i>
+					</a>
+				</li>
+			
+		
+			
+		
+			
+		
+			
+		
+	</ul>
+</div>
+    <div class="copyright">
+        <span>
+            
+            
+            
+                © John Doe 2017 - 2022
+            
+        </span>
+    </div>
+    <div class="power">
+        <span>
+            Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> & <a target="_blank" rel="noopener" href="https://github.com/CaiChenghan/iLiKE">iLiKE Theme</a>
+        </span>
+    </div>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+    <!--page counter part-->
+<script>
+function addCount (Counter) {
+    url=$('.article-date').attr('href').trim();
+    title = $('.article-title').text().trim();
+    var query = new AV.Query(Counter);
+    //use url as unique idnetfication
+    query.equalTo("url",url);
+    query.find({
+        success: function(results) {
+            if (results.length>0) {
+                var counter=results[0];
+                counter.fetchWhenSave(true); //get recent result
+                counter.increment("time");
+                counter.save();
+            } else {
+                var newcounter=new Counter();
+                newcounter.set("title",title);
+                newcounter.set("url",url);
+                newcounter.set("time",1);
+                newcounter.save(null,{
+                    success: function(newcounter) {
+                        //alert('New object created');
+                    }, error: function(newcounter,error) {
+                        alert('Failed to create');
+                    }
+                })
+            }
+        },
+        error: function(error) {
+            //find null is not a error
+            alert('Error:'+error.code+" "+error.message);
+        }
+    });
+}
+$(function() {
+    var Counter=AV.Object.extend("Counter");
+    //only increse visit counting when intering a page
+    if ($('.article-title').length == 1) {
+       addCount(Counter);
+    }
+    var query=new AV.Query(Counter);
+    query.descending("time");
+    // the sum of popular posts
+    query.limit(10); 
+    query.find({
+        success: function(results) {
+                for(var i=0;i<results.length;i++) {
+                    var counter=results[i];
+                    title=counter.get("title");
+                    url=counter.get("url");
+                    time=counter.get("time");
+                    // add to the popularlist widget
+                    showcontent=title+" ("+time+")";
+                    //notice the "" in href
+                    $('.popularlist').append('<li><a href="'+url+'">'+showcontent+'</a></li>');
+                }
+            },
+        error: function(error) {
+            alert("Error:"+error.code+" "+error.message);
+        }
+    });
+});
+</script>
+</div>
+    </div>
+</body>
+</html>
